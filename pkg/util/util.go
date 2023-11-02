@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/google/go-github/v27/github"
 	go_logger "github.com/pefish/go-logger"
+	"github.com/pefish/selenium-server/pkg/global"
 	"google.golang.org/api/option"
 	"hash"
 	"io"
@@ -19,7 +20,6 @@ import (
 	"path"
 	"regexp"
 	"runtime"
-	"selenium-server/pkg/global"
 	"strings"
 	"sync"
 )

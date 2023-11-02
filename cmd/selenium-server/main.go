@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/pefish/go-commander"
 	go_logger "github.com/pefish/go-logger"
-	"selenium-server/cmd/selenium-server/command"
-	"selenium-server/version"
+	"github.com/pefish/selenium-server/cmd/selenium-server/command"
+	"github.com/pefish/selenium-server/version"
 )
 
 func main() {

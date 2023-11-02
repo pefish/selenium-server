@@ -1,4 +1,4 @@
-module selenium-server
+module github.com/pefish/selenium-server
 
 go 1.20
 

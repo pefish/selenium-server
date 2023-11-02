@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"github.com/pefish/go-commander"
 	go_config "github.com/pefish/go-config"
+	"github.com/pefish/selenium-server/pkg/global"
+	"github.com/pefish/selenium-server/pkg/util"
 	"github.com/tarantool/go-prompt"
 	"github.com/tebeka/selenium"
 	"os"
 	"path"
-	"selenium-server/pkg/global"
-	"selenium-server/pkg/util"
 )
 
 type DefaultCommand struct {

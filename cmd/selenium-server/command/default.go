@@ -9,6 +9,7 @@ import (
 	"github.com/pefish/selenium-server/pkg/util"
 	"github.com/tarantool/go-prompt"
 	"github.com/tebeka/selenium"
+
 	"os"
 	"path"
 )

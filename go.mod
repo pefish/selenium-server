@@ -47,5 +47,3 @@ require (
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 	honnef.co/go/tools v0.0.1-2019.2.3 // indirect
 )
-
-replace github.com/tebeka/selenium v0.9.9 => github.com/pefish/selenium v1.0.0

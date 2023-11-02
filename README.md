@@ -9,7 +9,7 @@ selenium-server
 ## Install
 
 ```
-go install github.com/pefish/selenium-server/cmd/selenium-server@latest
+go install github.com/pefish/selenium-server/cmd/...@latest
 ```
 
 ## Quick start

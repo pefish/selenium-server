@@ -24,7 +24,6 @@ require (
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mattn/go-tty v0.0.3 // indirect
-	github.com/mediabuyerbot/go-crx3 v1.3.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pefish/go-reflect v0.2.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

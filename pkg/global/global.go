@@ -8,8 +8,7 @@ const (
 )
 
 type Config struct {
-	DataDir string `json:"datadir"`
-	Port    int    `json:"port"`
+	Port int `json:"port" default:"8080" usage:"Port."`
 }
 
 var GlobalConfig Config

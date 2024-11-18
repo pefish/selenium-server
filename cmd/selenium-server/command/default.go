@@ -1,12 +1,13 @@
 package command
 
 import (
-	"flag"
 	"fmt"
+
 	"github.com/pefish/go-commander"
 	go_config "github.com/pefish/go-config"
 	"github.com/pefish/selenium-server/pkg/global"
 	"github.com/pefish/selenium-server/pkg/util"
+	"github.com/pkg/errors"
 	"github.com/tarantool/go-prompt"
 	"github.com/tebeka/selenium"
 
@@ -21,13 +22,15 @@ func NewDefaultCommand() *DefaultCommand {
 	return &DefaultCommand{}
 }
 
-func (dc *DefaultCommand) DecorateFlagSet(flagSet *flag.FlagSet) error {
-	flagSet.String("datadir", "./", "")
-	flagSet.Int("port", 8080, "")
+func (dc *DefaultCommand) Config() interface{} {
+	return &global.GlobalConfig
+}
+
+func (dc *DefaultCommand) Data() interface{} {
 	return nil
 }
 
-func (dc *DefaultCommand) Init(data *commander.StartData) error {
+func (dc *DefaultCommand) Init(commander *commander.Commander) error {
 	err := go_config.ConfigManagerInstance.Unmarshal(&global.GlobalConfig)
 	if err != nil {
 		return err
@@ -36,11 +39,11 @@ func (dc *DefaultCommand) Init(data *commander.StartData) error {
 	return nil
 }
 
-func (dc *DefaultCommand) OnExited(data *commander.StartData) error {
+func (dc *DefaultCommand) OnExited(commander *commander.Commander) error {
 	return nil
 }
 
-func (dc *DefaultCommand) Start(data *commander.StartData) error {
+func (dc *DefaultCommand) Start(commander *commander.Commander) error {
 	fmt.Println("Please select browser.")
 	browserName := prompt.New(
 		func(s string) {},
@@ -60,13 +63,11 @@ func (dc *DefaultCommand) Start(data *commander.StartData) error {
 		}, prompt.OptionPrefix(">>> ")).
 		Input()
 	if browserName == "" {
-		return fmt.Errorf("Can not be empty.")
+		return errors.New("Browser name can not be empty.")
 	}
 
-	dataDir := go_config.ConfigManagerInstance.MustGetString("datadir")
-	port := go_config.ConfigManagerInstance.MustGetInt("port")
-	seleniumPath := path.Join(dataDir, "selenium-server.jar")
-	driverPath := path.Join(dataDir, fmt.Sprintf("%sdriver", browserName))
+	seleniumPath := path.Join(commander.DataDir, "selenium-server.jar")
+	driverPath := path.Join(commander.DataDir, fmt.Sprintf("%sdriver", browserName))
 
 	if !util.FileExists(seleniumPath) || !util.FileExists(driverPath) {
 		fmt.Println("Please input driver build version.")
@@ -102,9 +103,9 @@ func (dc *DefaultCommand) Start(data *commander.StartData) error {
 			Input()
 
 		if driverBuildVersion == "" {
-			return fmt.Errorf("Can not be empty.")
+			commander.Logger.Info("没有选择版本，即将下载最新版本")
 		}
-		err := util.DownloadDeps(data.ExitCancelCtx, browserName, driverBuildVersion)
+		err := util.DownloadDeps(commander.Ctx, commander.Logger, browserName, driverBuildVersion)
 		if err != nil {
 			return err
 		}
@@ -129,13 +130,13 @@ func (dc *DefaultCommand) Start(data *commander.StartData) error {
 		return fmt.Errorf("browser config error")
 	}
 	selenium.SetDebug(true)
-	service, err := selenium.NewSeleniumService(seleniumPath, port, opts...)
+	service, err := selenium.NewSeleniumService(seleniumPath, global.GlobalConfig.Port, opts...)
 	if err != nil {
 		return err
 	}
 	defer service.Stop()
 	select {
-	case <-data.ExitCancelCtx.Done():
+	case <-commander.Ctx.Done():
 		break
 	}
 	return nil

@@ -1,17 +1,12 @@
 package util
 
 import (
-	"cloud.google.com/go/storage"
 	"context"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/google/go-github/v27/github"
-	go_logger "github.com/pefish/go-logger"
-	"github.com/pefish/selenium-server/pkg/global"
-	"google.golang.org/api/option"
 	"hash"
 	"io"
 	"net/http"
@@ -22,6 +17,12 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+
+	"cloud.google.com/go/storage"
+	"github.com/google/go-github/v27/github"
+	i_logger "github.com/pefish/go-interface/i-logger"
+	"github.com/pefish/selenium-server/pkg/global"
+	"google.golang.org/api/option"
 )
 
 type file struct {
@@ -144,15 +145,15 @@ func addFirefoxDriver(ctx context.Context, version string) error {
 	)
 }
 
-func handleFile(file file, downloadBrowsers bool) error {
+func handleFile(logger i_logger.ILogger, file file, downloadBrowsers bool) error {
 	if file.browser && !downloadBrowsers {
-		go_logger.Logger.InfoF("Skipping %q because --download_browser is not set.", file.name)
+		logger.InfoF("Skipping %q because --download_browser is not set.", file.name)
 		return nil
 	}
 	if file.hash != "" && fileSameHash(file) {
-		go_logger.Logger.InfoF("Skipping file %q which has already been downloaded.", file.name)
+		logger.InfoF("Skipping file %q which has already been downloaded.", file.name)
 	} else {
-		go_logger.Logger.InfoF("Downloading %q from %q", file.name, file.url)
+		logger.InfoF("Downloading %q from %q", file.name, file.url)
 		if err := downloadFile(file); err != nil {
 			return err
 		}
@@ -160,26 +161,26 @@ func handleFile(file file, downloadBrowsers bool) error {
 
 	switch path.Ext(file.name) {
 	case ".zip":
-		go_logger.Logger.InfoF("Unzipping %q", file.name)
+		logger.InfoF("Unzipping %q", file.name)
 		if err := exec.Command("unzip", "-o", file.name).Run(); err != nil {
 			return fmt.Errorf("Error unzipping %q: %v", file.name, err)
 		}
 		os.RemoveAll(file.name)
 	case ".gz":
-		go_logger.Logger.InfoF("Unzipping %q", file.name)
+		logger.InfoF("Unzipping %q", file.name)
 		if err := exec.Command("tar", "-xzf", file.name).Run(); err != nil {
 			return fmt.Errorf("Error unzipping %q: %v", file.name, err)
 		}
 		os.RemoveAll(file.name)
 	case ".bz2":
-		go_logger.Logger.InfoF("Unzipping %q", file.name)
+		logger.InfoF("Unzipping %q", file.name)
 		if err := exec.Command("tar", "-xjf", file.name).Run(); err != nil {
 			return fmt.Errorf("Error unzipping %q: %v", file.name, err)
 		}
 		os.RemoveAll(file.name)
 	}
 	if rename := file.rename; len(rename) == 2 {
-		go_logger.Logger.InfoF("Renaming %q to %q", rename[0], rename[1])
+		logger.InfoF("Renaming %q to %q", rename[0], rename[1])
 		os.RemoveAll(rename[1])
 		if err := os.Rename(rename[0], rename[1]); err != nil {
 			return fmt.Errorf("Error renaming %q to %q: %v", rename[0], rename[1], err)
@@ -255,7 +256,6 @@ func fileSameHash(file file) bool {
 
 	sum := hex.EncodeToString(h.Sum(nil))
 	if sum != file.hash {
-		go_logger.Logger.WarnF("File %q: got hash %q, expect hash %q", file.name, sum, file.hash)
 		return false
 	}
 	return true
@@ -269,16 +269,16 @@ func FileExists(filename string) bool {
 	return !info.IsDir()
 }
 
-func DownloadDeps(ctx context.Context, browserName, driverBuildVersion string) error {
+func DownloadDeps(ctx context.Context, logger i_logger.ILogger, browserName, driverBuildVersion string) error {
 
 	switch browserName {
 	case string(global.Browser_Firefox):
 		if err := addFirefoxDriver(ctx, driverBuildVersion); err != nil {
-			go_logger.Logger.ErrorF("Unable to download firefox driver: %v", err)
+			logger.ErrorF("Unable to download firefox driver: %v", err)
 		}
 	case string(global.Browser_Chrome):
 		if err := addChromeDriver(ctx, driverBuildVersion); err != nil {
-			go_logger.Logger.ErrorF("Unable to download chrome driver: %v", err)
+			logger.ErrorF("Unable to download chrome driver: %v", err)
 		}
 	}
 
@@ -287,8 +287,8 @@ func DownloadDeps(ctx context.Context, browserName, driverBuildVersion string) e
 		wg.Add(1)
 		file := file
 		go func() {
-			if err := handleFile(file, true); err != nil {
-				go_logger.Logger.ErrorF("Error handling %s: %s", file.name, err)
+			if err := handleFile(logger, file, true); err != nil {
+				logger.ErrorF("Error handling %s: %s", file.name, err)
 				os.Exit(1)
 			}
 			wg.Done()
